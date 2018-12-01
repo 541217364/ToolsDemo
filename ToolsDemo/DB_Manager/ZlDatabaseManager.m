@@ -47,8 +47,6 @@
     NSMutableArray *proArray = array[1];
     BOOL __block result;
     [self.baseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-       
-    if ([db open]) {
         
         [db setShouldCacheStatements:YES];
         if (![db tableExists:tableName]) {
@@ -64,10 +62,6 @@
             }
         }else{
             
-            //存在该表
-             result = [db executeUpdate:sql values:proArray error:nil];
-        }
-        
         }
         [db close];
     }];
@@ -76,7 +70,7 @@
 }
 
 #pragma mark 查询数据库
-
+    
 - (NSMutableArray *)selectDataWithModel:(id)model withFileName:(NSString *)tableName withLimit:(NSUInteger)count{
     
     NSMutableArray *selectArray = [NSMutableArray array];
@@ -88,7 +82,7 @@
             if ([db open]) {
                 if ([db tableExists:tableName]) {
                     
-                  FMResultSet *res= [db executeQuery:[NSString stringWithFormat:@"SELECT * FROM %@  LIMIT %ld",tableName,count]];
+                    FMResultSet *res= [db executeQuery:[NSString stringWithFormat:@"SELECT * FROM %@  LIMIT %ld",tableName,count]];
                     while ([res next]) {
                         id objc = [[[model class] alloc]init];
                         objc = [self getModel:[model class] withDataDic:[res resultDictionary]];
@@ -128,10 +122,10 @@
     return selectArray;
     
 }
-
-
+    
+    
 #pragma mark 更新某一个数据
-
+    
 - (BOOL)updateDataWithModel:(id)model withFileName:(NSString *)tableName withpriamrykey:(NSString *)primaryKey{
     
     [self getFilePathWithFileName:tableName];
@@ -147,7 +141,7 @@
     
     BOOL __block result;
     [self.baseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-       
+        
         if ([db open]) {
             
             if ([db tableExists:tableName]) {
@@ -160,7 +154,7 @@
                     NSString *sql = array[0];
                     sql = [NSString stringWithFormat:@"insert into %@ %@",tableName,sql];
                     NSMutableArray *proArray = array[1];
-    
+                    
                     result = [db executeUpdate:sql values:proArray error:nil];
                     
                 }
@@ -177,12 +171,12 @@
     
     return result;
 }
-
-
-
-
+    
+    
+    
+    
 #pragma mark 删除某一个数据
-
+    
 - (BOOL)deleteDataWithModel:(NSString *)primaryKey withFileName:(NSString *)tableName{
     
     [self getFilePathWithFileName:tableName];
@@ -198,7 +192,7 @@
     
     BOOL __block result;
     [self.baseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-       
+        
         if ([db open]) {
             
             if ([db tableExists:tableName]) {
@@ -218,17 +212,17 @@
     
     return result;
 }
-
-
+    
+    
 #pragma mark 删除指定表中所有数据
-
+    
 - (BOOL)deleteDataWithFileName:(NSString *)tableName{
     
     [self getFilePathWithFileName:tableName];
     
-     BOOL __block result;
+    BOOL __block result;
     [self.baseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-       
+        
         if ([db open]) {
             if ([db tableExists:tableName]) {
                 
@@ -240,42 +234,74 @@
                 NSLog(@"++++++++++%@ not find",tableName);
             }
         }
-       
+        
         [db close];
     }];
     
     return result;
 }
-
-#pragma mark 删除指定表
-
-- (BOOL)dropFileName:(NSString *)tableName{
     
-     [self getFilePathWithFileName:tableName];
+#pragma mark 更新字段
     
-     BOOL __block result;
+- (BOOL)insertColumn:(NSString *)columnName withColumType:(NSString *)columnType withFileName:(NSString *)tableName{
+    
+    
+    [self getFilePathWithFileName:tableName];
+    
+    BOOL __block result;
+    
     [self.baseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-       
+        
         if ([db open]) {
             
             if ([db tableExists:tableName]) {
                 
-            NSString *sql = [NSString stringWithFormat:@"drop table %@",tableName];
-            result = [db executeUpdate:sql];
+                if (![db columnExists:columnName inTableWithName:tableName]) {
+                    
+                    NSString *alertStr = [NSString stringWithFormat:@"ALTER TABLE %@ ADD %@ %@",tableName,columnName,columnType];
+                    
+                    result = [db executeUpdate:alertStr];
+                    
+                }
+            }else{
+                NSLog(@"%@ -----notfind",tableName);
+            }
+        }
+    }];
+    
+    
+    return result;
+}
+    
+#pragma mark 删除指定表
+    
+- (BOOL)dropFileName:(NSString *)tableName{
+    
+    [self getFilePathWithFileName:tableName];
+    
+    BOOL __block result;
+    [self.baseQueue inDatabase:^(FMDatabase * _Nonnull db) {
+        
+        if ([db open]) {
+            
+            if ([db tableExists:tableName]) {
+                
+                NSString *sql = [NSString stringWithFormat:@"drop table %@",tableName];
+                result = [db executeUpdate:sql];
                 
             }else{
                 
                 NSLog(@"++++++++++%@ not find",tableName);
             }
         }
-       
+        
         [db close];
     }];
     
     
     return result;
 }
-
+    
 -(NSString *)getCreateSqlWithtableName:(NSString *)tableName withDataModel:(id)model{
     
     NSString *statementString = @"";
@@ -292,9 +318,9 @@
     
     return statementString;
 }
-
-
-
+    
+    
+    
 -(NSString *)createTableWithMode:(id)model withPrimaryKey:(NSString *)primaryKey{
     
     unsigned int numIvars;      //成员变量个数
@@ -329,13 +355,13 @@
             NSString *type = kvarsTypeArr[i];
             
             if ([type containsString:@"NSString"]) {
-            
+                
                 type = @"text";
                 
             }else if ([type containsString:@"NSData"]){
-
+                
                 type = @"blob";
-
+                
             }else{
                 
                 if ([type containsString:@"NSArray"] ||
@@ -362,17 +388,17 @@
                     creteSql = [creteSql stringByAppendingString:[NSString stringWithFormat:@",%@ %@ PRIMARY KEY ",pro,type]];
                 }else{
                     
-                     creteSql = [creteSql stringByAppendingString:[NSString stringWithFormat:@"%@ %@ PRIMARY KEY ",pro,type]];
+                    creteSql = [creteSql stringByAppendingString:[NSString stringWithFormat:@"%@ %@ PRIMARY KEY ",pro,type]];
                 }
                 
             }else{
                 
                 if (i != 0) {
                     
-                     creteSql = [creteSql stringByAppendingString:[NSString stringWithFormat:@",%@ %@ ",pro,type]];
+                    creteSql = [creteSql stringByAppendingString:[NSString stringWithFormat:@",%@ %@ ",pro,type]];
                 }else{
                     
-                     creteSql = [creteSql stringByAppendingString:[NSString stringWithFormat:@"%@ %@ ",pro,type]];
+                    creteSql = [creteSql stringByAppendingString:[NSString stringWithFormat:@"%@ %@ ",pro,type]];
                 }
             }
             
@@ -392,8 +418,8 @@
     
     return creteSql;
 }
-
-
+    
+    
 -(NSMutableArray *)inserTableSql:(id)model{
     
     unsigned int numIvars;      //成员变量个数
@@ -434,23 +460,23 @@
         [kvarsValues addObject:memberValue];
     }];
     
-     NSString *tempStr1 = @"";
-     NSString *tempStr2 = @"";
+    NSString *tempStr1 = @"";
+    NSString *tempStr2 = @"";
     
     for (int i = 0; i < kvarsKeyArr.count; i ++) {
         
         NSString *pro = kvarsKeyArr[i];
-
+        
         if (i != 0 ) {
             
-           tempStr1 =  [tempStr1 stringByAppendingString:[NSString stringWithFormat:@",%@",pro]];
+            tempStr1 =  [tempStr1 stringByAppendingString:[NSString stringWithFormat:@",%@",pro]];
             
-          tempStr2 =  [tempStr2 stringByAppendingString:[NSString stringWithFormat:@",%@",@"?"]];
+            tempStr2 =  [tempStr2 stringByAppendingString:[NSString stringWithFormat:@",%@",@"?"]];
             
         }else{
             
-          tempStr1 =  [tempStr1 stringByAppendingString:pro];
-          tempStr2 =  [tempStr2 stringByAppendingString:@"?"];
+            tempStr1 =  [tempStr1 stringByAppendingString:pro];
+            tempStr2 =  [tempStr2 stringByAppendingString:@"?"];
         }
         
     }
@@ -468,129 +494,129 @@
     return aimArray;
     
 }
-
-// 通过字典获取模型数据
+    
+    // 通过字典获取模型数据
 - (id)getModel:(Class)kclass withDataDic:(NSDictionary *)kDic
-{
-    id objc = [[[kclass class] alloc]init];
-    
-    unsigned int methodCount = 0;
-    NSString *kvarsKey = @"";   //获取成员变量的名字
-    NSString *kvarsType = @"";  //成员变量类型
-    
-    Ivar * ivars = class_copyIvarList([kclass class], &methodCount);
-    for (int i = 0 ; i < methodCount; i ++) {
-        Ivar ivar = ivars[i];
-        kvarsKey = [NSString stringWithUTF8String:ivar_getName(ivar)];
-        if ([kvarsKey hasPrefix:@"_"]) {
-            kvarsKey = [kvarsKey stringByReplacingOccurrencesOfString:@"_" withString:@"" options:NSCaseInsensitiveSearch range:NSMakeRange(0, 1)];
-        }
-        kvarsType = [NSString stringWithUTF8String:ivar_getTypeEncoding(ivar)];
+    {
+        id objc = [[[kclass class] alloc]init];
         
-        NSString *ivarValueString = [NSString stringWithFormat:@"%@",[kDic objectForKey:kvarsKey]];
+        unsigned int methodCount = 0;
+        NSString *kvarsKey = @"";   //获取成员变量的名字
+        NSString *kvarsType = @"";  //成员变量类型
         
-        if (!ivarValueString) { continue; }
-        
-        //实例变量值
-        id ivarValue = ivarValueString;
-        
-        /*  类型码判断
-         根据当前Model的成员变量类型,来给变量赋值.
-         */
-        
-        
-        //c - char
-        if ([kvarsType isEqualToString:@"c"])
-            ivarValue = [NSNumber numberWithChar:[ivarValueString intValue]];
-        //i - int
-        else if ([kvarsType isEqualToString:@"i"])
-            ivarValue = [NSNumber numberWithInt:[ivarValueString intValue]];
-        //s - short
-        else if ([kvarsType isEqualToString:@"s"])
-            ivarValue = [NSNumber numberWithShort:[ivarValueString intValue]];
-        //l - long
-        else if ([kvarsType isEqualToString:@"l"])
-            ivarValue = [NSNumber numberWithLong:[ivarValueString intValue]];
-        //q - long long
-        else if ([kvarsType isEqualToString:@"q"])
-            ivarValue = [NSNumber numberWithLongLong:[ivarValueString intValue]];
-        //C - unsigned char
-        else if ([kvarsType isEqualToString:@"C"])
-            ivarValue = [NSNumber numberWithUnsignedChar:[ivarValueString intValue]];
-        //I - unsigned int
-        else if ([kvarsType isEqualToString:@"I"])
-            ivarValue = [NSNumber numberWithUnsignedInt:[ivarValueString intValue]];
-        //S - unsigned short
-        else if ([kvarsType isEqualToString:@"S"])
-            ivarValue = [NSNumber numberWithUnsignedShort:[ivarValueString intValue]];
-        //L - unsigned long
-        else if ([kvarsType isEqualToString:@"L"])
-            ivarValue = [NSNumber numberWithUnsignedLong:[ivarValueString intValue]];
-        //Q - unsigned long long
-        else if ([kvarsType isEqualToString:@"Q"])
-            ivarValue = [NSNumber numberWithUnsignedLongLong:[ivarValueString intValue]];
-        //f - float
-        else if ([kvarsType isEqualToString:@"f"])
-            ivarValue = [NSNumber numberWithFloat:[ivarValueString floatValue]];
-        //d - double
-        else if ([kvarsType isEqualToString:@"d"])
-            ivarValue = [NSNumber numberWithDouble:[ivarValueString doubleValue]];
-        //B - bool or a C99 _Bool
-        else if ([kvarsType isEqualToString:@"B"]) {
-            if ([ivarValueString isEqualToString:@"1"]) {
-                ivarValue = [NSNumber numberWithBool:YES];
-            } else {
-                ivarValue = [NSNumber numberWithBool:NO];
+        Ivar * ivars = class_copyIvarList([kclass class], &methodCount);
+        for (int i = 0 ; i < methodCount; i ++) {
+            Ivar ivar = ivars[i];
+            kvarsKey = [NSString stringWithUTF8String:ivar_getName(ivar)];
+            if ([kvarsKey hasPrefix:@"_"]) {
+                kvarsKey = [kvarsKey stringByReplacingOccurrencesOfString:@"_" withString:@"" options:NSCaseInsensitiveSearch range:NSMakeRange(0, 1)];
             }
-        }
-        //v - void
-        //        else if ([kvarsType isEqualToString:@"v"]) {}
-        //* - char *
-        //        else if ([kvarsType isEqualToString:@"*"]) {}
-        //@ - id
-        else if ([kvarsType isEqualToString:@"@"]) {
-            ivarValue = [DPDatabaseUtils getIDVariableValueTypesWithString:ivarValueString];
-        }
-        //# - Class
-        //        else if ([kvarsType isEqualToString:@"#"]) {}
-        //: - SEL
-        //        else if ([kvarsType isEqualToString:@":"]) {}
-        //@"NSArray" - array
-        else if ([kvarsType containsString:@"NSArray"]          ||
-                 [kvarsType containsString:@"NSMutableArray"]   ||
-                 [kvarsType containsString:@"NSDictionary"]     ||
-                 [kvarsType containsString:@"NSMutableDictionary"]) {
+            kvarsType = [NSString stringWithUTF8String:ivar_getTypeEncoding(ivar)];
             
-            ivarValue = [NSJSONSerialization JSONObjectWithData:[[NSData alloc]initWithBase64EncodedString:[kDic objectForKey:kvarsKey] options:0] options:NSJSONReadingMutableLeaves error:nil];
+            NSString *ivarValueString = [NSString stringWithFormat:@"%@",[kDic objectForKey:kvarsKey]];
+            
+            if (!ivarValueString) { continue; }
+            
+            //实例变量值
+            id ivarValue = ivarValueString;
+            
+            /*  类型码判断
+             根据当前Model的成员变量类型,来给变量赋值.
+             */
+            
+            
+            //c - char
+            if ([kvarsType isEqualToString:@"c"])
+            ivarValue = [NSNumber numberWithChar:[ivarValueString intValue]];
+            //i - int
+            else if ([kvarsType isEqualToString:@"i"])
+            ivarValue = [NSNumber numberWithInt:[ivarValueString intValue]];
+            //s - short
+            else if ([kvarsType isEqualToString:@"s"])
+            ivarValue = [NSNumber numberWithShort:[ivarValueString intValue]];
+            //l - long
+            else if ([kvarsType isEqualToString:@"l"])
+            ivarValue = [NSNumber numberWithLong:[ivarValueString intValue]];
+            //q - long long
+            else if ([kvarsType isEqualToString:@"q"])
+            ivarValue = [NSNumber numberWithLongLong:[ivarValueString intValue]];
+            //C - unsigned char
+            else if ([kvarsType isEqualToString:@"C"])
+            ivarValue = [NSNumber numberWithUnsignedChar:[ivarValueString intValue]];
+            //I - unsigned int
+            else if ([kvarsType isEqualToString:@"I"])
+            ivarValue = [NSNumber numberWithUnsignedInt:[ivarValueString intValue]];
+            //S - unsigned short
+            else if ([kvarsType isEqualToString:@"S"])
+            ivarValue = [NSNumber numberWithUnsignedShort:[ivarValueString intValue]];
+            //L - unsigned long
+            else if ([kvarsType isEqualToString:@"L"])
+            ivarValue = [NSNumber numberWithUnsignedLong:[ivarValueString intValue]];
+            //Q - unsigned long long
+            else if ([kvarsType isEqualToString:@"Q"])
+            ivarValue = [NSNumber numberWithUnsignedLongLong:[ivarValueString intValue]];
+            //f - float
+            else if ([kvarsType isEqualToString:@"f"])
+            ivarValue = [NSNumber numberWithFloat:[ivarValueString floatValue]];
+            //d - double
+            else if ([kvarsType isEqualToString:@"d"])
+            ivarValue = [NSNumber numberWithDouble:[ivarValueString doubleValue]];
+            //B - bool or a C99 _Bool
+            else if ([kvarsType isEqualToString:@"B"]) {
+                if ([ivarValueString isEqualToString:@"1"]) {
+                    ivarValue = [NSNumber numberWithBool:YES];
+                } else {
+                    ivarValue = [NSNumber numberWithBool:NO];
+                }
+            }
+            //v - void
+            //        else if ([kvarsType isEqualToString:@"v"]) {}
+            //* - char *
+            //        else if ([kvarsType isEqualToString:@"*"]) {}
+            //@ - id
+            else if ([kvarsType isEqualToString:@"@"]) {
+                ivarValue = [DPDatabaseUtils getIDVariableValueTypesWithString:ivarValueString];
+            }
+            //# - Class
+            //        else if ([kvarsType isEqualToString:@"#"]) {}
+            //: - SEL
+            //        else if ([kvarsType isEqualToString:@":"]) {}
+            //@"NSArray" - array
+            else if ([kvarsType containsString:@"NSArray"]          ||
+                     [kvarsType containsString:@"NSMutableArray"]   ||
+                     [kvarsType containsString:@"NSDictionary"]     ||
+                     [kvarsType containsString:@"NSMutableDictionary"]) {
+                
+                ivarValue = [NSJSONSerialization JSONObjectWithData:[[NSData alloc]initWithBase64EncodedString:[kDic objectForKey:kvarsKey] options:0] options:NSJSONReadingMutableLeaves error:nil];
+            }
+            //? - unknown type
+            else {
+                ivarValue = ivarValueString;
+            }
+            
+            [objc setValue:ivarValue forKey:kvarsKey];
         }
-        //? - unknown type
-        else {
-            ivarValue = ivarValueString;
-        }
-        
-        [objc setValue:ivarValue forKey:kvarsKey];
+        free(ivars);
+        return objc;
     }
-    free(ivars);
-    return objc;
-}
-
-//获取文件路径
+    
+    //获取文件路径
 - (void)getFilePathWithFileName:(NSString *)fileName
-{
-    NSAssert(fileName || ![fileName isEqualToString:@""], @"数据库文件名不可为空!");
-    _dbTableName = [@"DBA" stringByAppendingString:fileName];
-    _dbFilePath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.db",_dbTableName]];
-    NSLog(@"%@",_dbFilePath);
-}
-
-- (FMDatabaseQueue *)baseQueue
-{
-    if (!_baseQueue) {
-        _baseQueue = [FMDatabaseQueue databaseQueueWithPath:_dbFilePath];
+    {
+        NSAssert(fileName || ![fileName isEqualToString:@""], @"数据库文件名不可为空!");
+        _dbTableName = [@"DBA" stringByAppendingString:fileName];
+        _dbFilePath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.db",_dbTableName]];
+        NSLog(@"%@",_dbFilePath);
     }
-    return _baseQueue;
-}
-
+    
+- (FMDatabaseQueue *)baseQueue
+    {
+        if (!_baseQueue) {
+            _baseQueue = [FMDatabaseQueue databaseQueueWithPath:_dbFilePath];
+        }
+        return _baseQueue;
+    }
+    
 - (NSDictionary *)primaryDic{
     if (_primaryDic == nil) {
         NSString* tablePlistPath = [[NSBundle mainBundle] pathForResource:@"ZLDatabaseTableName" ofType:@"plist"];
@@ -598,13 +624,13 @@
     }
     return _primaryDic;
 }
-
-
-
-
+    
+    
+    
+    
 #pragma mark  处理图片的两个方法
-
-//图片转换base64
+    
+    //图片转换base64
 - (NSString *)imageToString:(UIImage *)image{
     
     NSData *imagedata = UIImagePNGRepresentation(image);
@@ -614,7 +640,7 @@
     return image64;
     
 }
-//base64转换图片
+    //base64转换图片
 - (UIImage *)stringToImage:(NSString *)str {
     
     NSData * imageData =[[NSData alloc] initWithBase64EncodedString:str options:NSDataBase64DecodingIgnoreUnknownCharacters];
@@ -624,7 +650,7 @@
     return photo;
     
 }
-
-
-
-@end
+    
+    
+    
+    @end
