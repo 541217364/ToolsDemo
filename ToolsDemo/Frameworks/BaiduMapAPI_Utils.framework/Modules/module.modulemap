@@ -1,0 +1,6 @@
+framework module BaiduMapAPI_Utils {
+  umbrella header "BaiduMapAPI_Utils.h"
+
+  export *
+  module * { export * }
+}

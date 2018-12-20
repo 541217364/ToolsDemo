@@ -48,6 +48,7 @@
     BOOL __block result;
     [self.baseQueue inDatabase:^(FMDatabase * _Nonnull db) {
         
+        [db open];
         [db setShouldCacheStatements:YES];
         if (![db tableExists:tableName]) {
             

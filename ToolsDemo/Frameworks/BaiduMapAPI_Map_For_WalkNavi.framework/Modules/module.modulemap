@@ -1,0 +1,6 @@
+framework module BaiduMapAPI_Map_For_WalkNavi {
+  umbrella header "BaiduMapAPI_Map_For_WalkNavi.h"
+
+  export *
+  module * { export * }
+}

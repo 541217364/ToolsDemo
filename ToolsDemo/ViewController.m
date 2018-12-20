@@ -11,7 +11,6 @@
 #import "ZlDatabaseManager.h"
 #import "Student.h"
 #import "CommonMaskView.h"
-#import "ShareViewController.h"
 #import "MemberManagementViewController.h"
 #import "CustomViewController.h"
 #import <AipOcrSdk/AipOcrSdk.h>
@@ -194,6 +193,7 @@ static NSString *TABLENAME = @"Student";
         student.age = @"12";
         UIImage *image = [UIImage imageNamed:@"X3"];
         student.gradute = [[ZlDatabaseManager shareManager] imageToString:image];
+    NSLog(@"++++=%@",student.gradute);
     student.friends = [[NSMutableArray alloc]initWithObjects:@"1", @"2",nil];
         student.sex = @"zll";
     student.pats = @{@"zl":@[@"1",@"2"],@"14":@"!%",@"rt":@"0-"};
@@ -278,8 +278,8 @@ static NSString *TABLENAME = @"Student";
                                      
                                      [[AipOcrService shardService] detectIdCardFrontFromImage:image
                                                                                   withOptions:nil
-                                                                               successHandler:_successHandler
-                                                                                  failHandler:_failHandler];
+                                                                               successHandler:self->_successHandler
+                                                                                  failHandler:self->_failHandler];
                                  }];
     
     [self presentViewController:vc animated:YES completion:nil];
